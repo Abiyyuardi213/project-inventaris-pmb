@@ -85,11 +85,20 @@
     </div>
 </div>
 
-<!-- jQuery & AdminLTE JS -->
+<!-- jQuery, AdminLTE & SweetAlert2 JS -->
 <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@4.6.2/dist/js/bootstrap.bundle.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 
 <script>
+    const Toast = Swal.mixin({
+        toast: true,
+        position: 'top-end',
+        showConfirmButton: false,
+        timer: 2000,
+        timerProgressBar: true
+    });
+
     $(document).ready(function() {
         // Cek jika sudah login
         if (localStorage.getItem('token')) {
@@ -118,7 +127,13 @@
                 if (res.ok && result.success) {
                     localStorage.setItem('token', result.data.token);
                     localStorage.setItem('user', JSON.stringify(result.data.user));
-                    window.location.href = '/administrator/dashboard';
+                    Toast.fire({
+                        icon: 'success',
+                        title: 'Login berhasil! Mengalihkan...'
+                    });
+                    setTimeout(() => {
+                        window.location.href = '/administrator/dashboard';
+                    }, 800);
                 } else {
                     $('#loginAlertText').text(result.message || 'Username atau password salah.');
                     alertBox.fadeIn();
