@@ -1,0 +1,29 @@
+<nav class="main-header navbar navbar-expand-md navbar-dark navbar-navy border-bottom-0 shadow-sm fixed-top" style="position: fixed; top: 0; left: 0; right: 0; width: 100%; z-index: 1040;">
+    <div class="container-fluid px-4">
+        <a href="/administrator/dashboard" onclick="switchAdminTab('/administrator/dashboard', 'tab-dashboard-link'); return false;" class="navbar-brand brand-link-custom d-flex align-items-center">
+            <i class="fas fa-boxes-stacked me-2 text-warning"></i>
+            <span>INVENTARIS PPMB</span>
+        </a>
+
+        <div class="navbar-nav ml-auto align-items-center">
+            <!-- Status WA Bot -->
+            <span class="badge badge-warning px-3 py-2 text-dark font-weight-bold me-3" id="navWaStatus">
+                <i class="fas fa-circle-notch fa-spin me-1"></i> Checking WA Bot...
+            </span>
+
+            <!-- User Profile & Logout -->
+            <div class="nav-item dropdown">
+                <a class="nav-link text-white font-weight-bold dropdown-toggle" data-toggle="dropdown" href="#">
+                    <i class="fas fa-user-circle me-1"></i> <span id="navUserFullName">Admin</span>
+                </a>
+                <div class="dropdown-menu dropdown-menu-right shadow">
+                    <span class="dropdown-header text-uppercase font-weight-bold" id="navUserRole">ROLE: ADMIN</span>
+                    <div class="dropdown-divider"></div>
+                    <a href="#" class="dropdown-item text-danger font-weight-bold" onclick="logout()">
+                        <i class="fas fa-sign-out-alt me-2"></i> Logout / Keluar
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+</nav>

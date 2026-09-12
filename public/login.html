@@ -1,0 +1,137 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Login - Sistem Inventaris PPMB</title>
+    <!-- Google Font: Source Sans Pro -->
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Source+Sans+Pro:300,400,400i,700&display=fallback">
+    <!-- FontAwesome 6 Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- AdminLTE v3.2 CSS -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/admin-lte@3.2/dist/css/adminlte.min.css">
+    <style>
+        body.login-page {
+            background-color: #e9ecef;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            min-height: 100vh;
+        }
+        .login-box {
+            width: 380px;
+        }
+        .card-primary.card-outline {
+            border-top: 4px solid #001f3f;
+        }
+    </style>
+</head>
+<body class="hold-transition login-page">
+<div class="login-box">
+    <!-- Logo Title -->
+    <div class="login-logo text-center mb-3">
+        <a href="#" class="font-weight-bold text-dark text-decoration-none">
+            <i class="fas fa-boxes-stacked text-navy me-2"></i><b>INVENTARIS</b> PPMB
+        </a>
+    </div>
+
+    <!-- Login Card -->
+    <div class="card card-outline card-primary shadow-sm">
+        <div class="card-body login-card-body rounded">
+            <p class="login-box-msg text-muted">Silakan login untuk mengakses Web Dashboard Admin</p>
+
+            <!-- Alert Error -->
+            <div id="loginAlert" class="alert alert-danger text-sm py-2 px-3 mb-3" style="display: none;" role="alert">
+                <i class="fas fa-exclamation-circle me-1"></i> <span id="loginAlertText">Username atau password salah!</span>
+            </div>
+
+            <form id="formLogin">
+                <div class="input-group mb-3">
+                    <input type="text" id="loginUsername" class="form-control" placeholder="Username" required autofocus>
+                    <div class="input-group-append">
+                        <div class="input-group-text">
+                            <span class="fas fa-user"></span>
+                        </div>
+                    </div>
+                </div>
+                <div class="input-group mb-3">
+                    <input type="password" id="loginPassword" class="form-control" placeholder="Password" required>
+                    <div class="input-group-append">
+                        <div class="input-group-text">
+                            <span class="fas fa-lock"></span>
+                        </div>
+                    </div>
+                </div>
+                <div class="row align-items-center mb-3">
+                    <div class="col-8">
+                        <div class="icheck-primary">
+                            <input type="checkbox" id="remember">
+                            <label for="remember" class="text-muted small">Ingat Sesi Saya</label>
+                        </div>
+                    </div>
+                    <div class="col-4">
+                        <button type="submit" class="btn btn-primary btn-block font-weight-bold" id="btnLoginSubmit">
+                            Login <i class="fas fa-sign-in-alt ml-1"></i>
+                        </button>
+                    </div>
+                </div>
+            </form>
+
+            <hr>
+            <div class="text-center text-muted small">
+                <span>Default Admin: <code>admin</code> / <code>adminpassword123</code></span>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- jQuery & AdminLTE JS -->
+<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@4.6.2/dist/js/bootstrap.bundle.min.js"></script>
+
+<script>
+    $(document).ready(function() {
+        // Cek jika sudah login
+        if (localStorage.getItem('token')) {
+            window.location.href = '/administrator/dashboard';
+        }
+
+        $('#formLogin').on('submit', async function(e) {
+            e.preventDefault();
+            const username = $('#loginUsername').val();
+            const password = $('#loginPassword').val();
+            const btnSubmit = $('#btnLoginSubmit');
+            const alertBox = $('#loginAlert');
+
+            alertBox.hide();
+            btnSubmit.prop('disabled', true).html('<i class="fas fa-circle-notch fa-spin"></i> Login...');
+
+            try {
+                const res = await fetch('/api/auth/login', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ username, password })
+                });
+
+                const result = await res.json();
+
+                if (res.ok && result.success) {
+                    localStorage.setItem('token', result.data.token);
+                    localStorage.setItem('user', JSON.stringify(result.data.user));
+                    window.location.href = '/administrator/dashboard';
+                } else {
+                    $('#loginAlertText').text(result.message || 'Username atau password salah.');
+                    alertBox.fadeIn();
+                }
+            } catch (err) {
+                console.error('Error submit login:', err);
+                $('#loginAlertText').text('Gagal terhubung ke server backend.');
+                alertBox.fadeIn();
+            } finally {
+                btnSubmit.prop('disabled', false).html('Login <i class="fas fa-sign-in-alt ml-1"></i>');
+            }
+        });
+    });
+</script>
+</body>
+</html>

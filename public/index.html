@@ -1,0 +1,1211 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sistem Inventaris PPMB - AdminLTE Dashboard</title>
+    <!-- Google Font: Source Sans Pro -->
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Source+Sans+Pro:300,400,400i,700&display=fallback">
+    <!-- FontAwesome 6 Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- AdminLTE v3.2 CSS -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/admin-lte@3.2/dist/css/adminlte.min.css">
+    <style>
+        body {
+            background-color: #f4f6f9;
+            padding-top: 56px; /* Offset persis sesuai tinggi fixed navbar */
+        }
+        .main-header {
+            margin-left: 0 !important;
+        }
+        .content-wrapper {
+            margin-left: 0 !important;
+            background-color: #f4f6f9;
+            padding-top: 0 !important; /* Hapus padding ganda AdminLTE */
+        }
+        .content-header {
+            padding: 12px 0 8px 0 !important; /* Jarak rapi dan presisi di bawah navbar */
+        }
+        .brand-link-custom {
+            font-size: 1.25rem;
+            font-weight: 700;
+            color: #ffffff !important;
+        }
+        .info-box {
+            min-height: 90px;
+            box-shadow: 0 0 1px rgba(0,0,0,.125), 0 1px 3px rgba(0,0,0,.2);
+            border-radius: 8px;
+        }
+        .qr-container {
+            background-color: #ffffff;
+            padding: 15px;
+            border-radius: 8px;
+            border: 2px dashed #007bff;
+            display: inline-block;
+        }
+        .nav-tabs .nav-link.active {
+            border-top: 3px solid #007bff !important;
+            font-weight: bold;
+        }
+    </style>
+</head>
+<body class="hold-transition layout-top-nav">
+<div class="wrapper">
+
+    <!-- Container Komponen Navbar Terpisah -->
+    <div id="navbar-placeholder"></div>
+
+    <!-- Content Wrapper -->
+    <div class="content-wrapper">
+        <!-- Content Header (Page header) -->
+        <div class="content-header">
+            <div class="container-fluid px-4">
+                <div class="row mb-2 align-items-center">
+                    <div class="col-sm-6">
+                        <h1 class="m-0 text-dark font-weight-bold" style="font-size: 1.6rem;">
+                            <i class="fas fa-tachometer-alt me-2 text-primary"></i>Dashboard Inventaris PPMB
+                        </h1>
+                    </div>
+                    <div class="col-sm-6">
+                        <ol class="breadcrumb float-sm-right mb-0">
+                            <li class="breadcrumb-item"><a href="#">Home</a></li>
+                            <li class="breadcrumb-item active">Inventaris & WA Bot</li>
+                        </ol>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Main Content -->
+        <div class="content">
+            <div class="container-fluid px-4">
+
+                <!-- AdminLTE Info-Boxes Stat Widgets (5 Metric Cards) -->
+                <div class="row">
+                    <!-- Total Kuantitas Unit Stok (SUM) -->
+                    <div class="col-12 col-sm-6 col-md-4 col-lg">
+                        <div class="info-box mb-3">
+                            <span class="info-box-icon bg-indigo elevation-1"><i class="fas fa-cubes"></i></span>
+                            <div class="info-box-content">
+                                <span class="info-box-text text-muted font-weight-bold">Total Kuantitas Stok</span>
+                                <span class="info-box-number text-lg text-primary font-weight-bold"><span id="statTotalUnitStock">0</span> Unit</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Total Jenis Barang -->
+                    <div class="col-12 col-sm-6 col-md-4 col-lg">
+                        <div class="info-box mb-3">
+                            <span class="info-box-icon bg-info elevation-1"><i class="fas fa-boxes"></i></span>
+                            <div class="info-box-content">
+                                <span class="info-box-text text-muted font-weight-bold">Total Jenis Barang</span>
+                                <span class="info-box-number text-lg" id="statTotalItems">0</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Stok Menipis Alert -->
+                    <div class="col-12 col-sm-6 col-md-4 col-lg">
+                        <div class="info-box mb-3">
+                            <span class="info-box-icon bg-danger elevation-1"><i class="fas fa-exclamation-triangle"></i></span>
+                            <div class="info-box-content">
+                                <span class="info-box-text text-muted font-weight-bold">Stok Menipis Alert</span>
+                                <span class="info-box-number text-lg text-danger" id="statLowStock">0</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Transaksi Hari Ini -->
+                    <div class="col-12 col-sm-6 col-md-4 col-lg">
+                        <div class="info-box mb-3">
+                            <span class="info-box-icon bg-success elevation-1"><i class="fas fa-exchange-alt"></i></span>
+                            <div class="info-box-content">
+                                <span class="info-box-text text-muted font-weight-bold">Transaksi Hari Ini</span>
+                                <span class="info-box-number text-lg text-success" id="statTodayTrans">0</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Total Kategori -->
+                    <div class="col-12 col-sm-6 col-md-4 col-lg">
+                        <div class="info-box mb-3">
+                            <span class="info-box-icon bg-warning elevation-1 text-white"><i class="fas fa-tags"></i></span>
+                            <div class="info-box-content">
+                                <span class="info-box-text text-muted font-weight-bold">Total Kategori</span>
+                                <span class="info-box-number text-lg" id="statTotalCategories">0</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- AdminLTE Card Tabs (Routing Rapi per Menu) -->
+                <div class="card card-primary card-outline card-outline-tabs">
+                    <div class="card-header p-0 border-bottom-0">
+                        <ul class="nav nav-tabs" id="adminLteTabs" role="tablist">
+                            <li class="nav-item">
+                                <a class="nav-link active" id="tab-dashboard-link" data-url="/administrator/dashboard" data-toggle="pill" href="#tab-dashboard" role="tab">
+                                    <i class="fas fa-chart-line me-1"></i> Dashboard Overview
+                                </a>
+                            </li>
+                            <li class="nav-item">
+                                <a class="nav-link" id="tab-wa-link" data-url="/administrator/wa-bot" data-toggle="pill" href="#tab-wa" role="tab">
+                                    <i class="fab fa-whatsapp me-1 text-success"></i> Status Bot WA & QR
+                                </a>
+                            </li>
+                            <li class="nav-item">
+                                <a class="nav-link" id="tab-items-link" data-url="/administrator/items" data-toggle="pill" href="#tab-items" role="tab">
+                                    <i class="fas fa-box-archive me-1"></i> Master Data Barang
+                                </a>
+                            </li>
+                            <li class="nav-item">
+                                <a class="nav-link" id="tab-trans-link" data-url="/administrator/transactions" data-toggle="pill" href="#tab-trans" role="tab">
+                                    <i class="fas fa-list-alt me-1"></i> Log Transaksi & Rekap
+                                </a>
+                            </li>
+                            <li class="nav-item">
+                                <a class="nav-link" id="tab-whitelist-link" data-url="/administrator/whitelist" data-toggle="pill" href="#tab-whitelist" role="tab">
+                                    <i class="fas fa-user-shield me-1"></i> Whitelist Operator WA
+                                </a>
+                            </li>
+                        </ul>
+                    </div>
+
+                    <div class="card-body">
+                        <div class="tab-content" id="adminLteTabsContent">
+
+                            <!-- ================= TAB 1: DASHBOARD OVERVIEW ================= -->
+                            <div class="tab-pane fade show active" id="tab-dashboard" role="tabpanel">
+
+                                <!-- Callout Alert Peringatan Stok Menipis (Hanya jika ada stok menipis) -->
+                                <div id="lowStockCallout" class="callout callout-danger mb-4" style="display: none;">
+                                    <h5 class="text-danger font-weight-bold"><i class="fas fa-exclamation-triangle me-2"></i>Perhatian: Barang Stok Menipis</h5>
+                                    <p class="text-muted mb-2">Terdapat barang inventaris yang jumlah stoknya telah mencapai atau berada di bawah batas minimum.</p>
+                                    <div class="table-responsive bg-white rounded p-2 border">
+                                        <table class="table table-sm table-bordered table-striped m-0">
+                                            <thead class="bg-danger text-white">
+                                                <tr>
+                                                    <th>Kode</th>
+                                                    <th>Nama Barang</th>
+                                                    <th>Kategori</th>
+                                                    <th>Stok Saat Ini</th>
+                                                    <th>Min Stok</th>
+                                                    <th>Lokasi Gudang</th>
+                                                </tr>
+                                            </thead>
+                                            <tbody id="dashLowStockBody"></tbody>
+                                        </table>
+                                    </div>
+                                </div>
+
+                                <!-- Baris 1: Tabel Ringkasan Seluruh Stok Barang & Transaksi Terbaru -->
+                                <div class="row">
+                                    <!-- Kolom Kiri: Tabel Stok Seluruh Barang -->
+                                    <div class="col-lg-7 mb-4">
+                                        <div class="card card-outline card-navy h-100">
+                                            <div class="card-header border-0">
+                                                <h3 class="card-title font-weight-bold">
+                                                    <i class="fas fa-boxes me-2 text-navy"></i>Ringkasan Ketersediaan Barang
+                                                </h3>
+                                                <div class="card-tools">
+                                                    <a href="/administrator/items" onclick="switchAdminTab('/administrator/items', 'tab-items-link'); return false;" class="btn btn-tool btn-sm">
+                                                        <i class="fas fa-arrow-circle-right me-1"></i>Kelola Barang
+                                                    </a>
+                                                </div>
+                                            </div>
+                                            <div class="card-body table-responsive p-0">
+                                                <table class="table table-striped table-valign-middle">
+                                                    <thead>
+                                                        <tr>
+                                                            <th>Barang</th>
+                                                            <th>Kategori</th>
+                                                            <th>Status Stok</th>
+                                                            <th>Kondisi</th>
+                                                        </tr>
+                                                    </thead>
+                                                    <tbody id="dashAllItemsBody">
+                                                        <tr>
+                                                            <td colspan="4" class="text-center text-muted py-3">Memuat ringkasan barang...</td>
+                                                        </tr>
+                                                    </tbody>
+                                                </table>
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    <!-- Kolom Kanan: 5 Transaksi Terakhir (Activity Feed) -->
+                                    <div class="col-lg-5 mb-4">
+                                        <div class="card card-outline card-primary h-100">
+                                            <div class="card-header border-0">
+                                                <h3 class="card-title font-weight-bold">
+                                                    <i class="fas fa-history me-2 text-primary"></i>Aktivitas Transaksi Terbaru
+                                                </h3>
+                                                <div class="card-tools">
+                                                    <a href="/administrator/transactions" onclick="switchAdminTab('/administrator/transactions', 'tab-trans-link'); return false;" class="btn btn-tool btn-sm">
+                                                        <i class="fas fa-list me-1"></i>Lihat Semua
+                                                    </a>
+                                                </div>
+                                            </div>
+                                            <div class="card-body p-0">
+                                                <ul class="products-list product-list-in-card pl-2 pr-2" id="dashRecentTransList">
+                                                    <li class="item text-center text-muted py-3">Memuat transaksi terbaru...</li>
+                                                </ul>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <!-- Baris 2: Ringkasan Kategori Inventaris -->
+                                <div class="row">
+                                    <div class="col-12">
+                                        <div class="card card-outline card-warning">
+                                            <div class="card-header">
+                                                <h3 class="card-title font-weight-bold">
+                                                    <i class="fas fa-tags me-2 text-warning"></i>Kategori Inventaris PPMB
+                                                </h3>
+                                            </div>
+                                            <div class="card-body">
+                                                <div class="row" id="dashCategoriesRow">
+                                                    <div class="col-12 text-center text-muted">Memuat kategori...</div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+
+                            </div>
+
+                            <!-- ================= TAB 2: WA BOT STATUS & QR ================= -->
+                            <div class="tab-pane fade" id="tab-wa" role="tabpanel">
+                                <div class="text-center py-4">
+                                    <h4 class="font-weight-bold mb-3"><i class="fab fa-whatsapp text-success me-2"></i>Status Integrasi WhatsApp Bot</h4>
+                                    
+                                    <div id="waStatusContainer" class="my-3">
+                                        <span class="badge badge-secondary fs-6 px-4 py-2" id="waStatusBadge">Memeriksa koneksi...</span>
+                                    </div>
+
+                                    <!-- Alert Callout jika membutuhkan QR Code -->
+                                    <div id="waQrSection" class="my-4" style="display: none;">
+                                        <div class="callout callout-warning text-left d-inline-block text-left" style="max-width: 600px;">
+                                            <h5><i class="fas fa-qrcode text-warning me-2"></i>Instruksi Scan WhatsApp Bot</h5>
+                                            <ol class="mb-0 pl-3">
+                                                <li>Buka aplikasi WhatsApp pada HP nomor Bot (<b>628113017176</b>).</li>
+                                                <li>Pilih menu <b>Perangkat Tertaut (Linked Devices)</b> ➡️ <b>Tautkan Perangkat</b>.</li>
+                                                <li>Arahkan kamera ke QR Code di bawah ini.</li>
+                                            </ol>
+                                        </div>
+                                        <br>
+                                        <div class="qr-container my-3">
+                                            <img id="waQrImage" src="" alt="QR Code WhatsApp" style="width: 250px; height: 250px;">
+                                        </div>
+                                        <p class="text-muted small"><i class="fas fa-sync fa-spin me-1"></i>QR Code otomatis diperbarui secara berkala.</p>
+                                    </div>
+
+                                    <!-- Status Terhubung -->
+                                    <div id="waConnectedSection" class="my-4" style="display: none;">
+                                        <div class="callout callout-success d-inline-block px-5 py-3 text-left">
+                                            <h5 class="text-success font-weight-bold mb-1"><i class="fas fa-check-circle me-2"></i>WhatsApp Bot Berhasil Terhubung!</h5>
+                                            <p class="mb-0">Nomor Bot Aktif: <strong id="waBotNumberText">-</strong></p>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- ================= TAB 3: MASTER BARANG ================= -->
+                            <div class="tab-pane fade" id="tab-items" role="tabpanel">
+                                <div class="d-flex justify-content-between align-items-center mb-3">
+                                    <h5 class="font-weight-bold m-0"><i class="fas fa-boxes me-2"></i>Master Data Barang Inventaris</h5>
+                                    <div>
+                                        <button class="btn btn-outline-primary me-2" data-toggle="modal" data-target="#modalCategory">
+                                            <i class="fas fa-folder-plus me-1"></i>+ Kategori
+                                        </button>
+                                        <button class="btn btn-primary" data-toggle="modal" data-target="#modalItem" onclick="resetItemForm()">
+                                            <i class="fas fa-plus me-1"></i>+ Tambah Barang
+                                        </button>
+                                    </div>
+                                </div>
+
+                                <!-- Filter Search AdminLTE -->
+                                <div class="row mb-3">
+                                    <div class="col-md-6 mb-2">
+                                        <div class="input-group">
+                                            <input type="text" id="searchItemInput" class="form-control" placeholder="Cari Kode atau Nama Barang..." onkeyup="loadItems()">
+                                            <div class="input-group-append">
+                                                <span class="input-group-text"><i class="fas fa-search"></i></span>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div class="col-md-4 mb-2">
+                                        <select id="filterCategorySelect" class="form-control custom-select" onchange="loadItems()">
+                                            <option value="">Semua Kategori</option>
+                                        </select>
+                                    </div>
+                                </div>
+
+                                <!-- Tabel Master Barang -->
+                                <div class="table-responsive">
+                                    <table class="table table-bordered table-striped table-hover align-middle">
+                                        <thead class="bg-navy text-white">
+                                            <tr>
+                                                <th>Kode Barang</th>
+                                                <th>Nama Barang</th>
+                                                <th>Kategori</th>
+                                                <th>Stok Saat Ini</th>
+                                                <th>Min Stok</th>
+                                                <th>Satuan</th>
+                                                <th>Lokasi Gudang</th>
+                                                <th class="text-center">Aksi</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody id="itemsTableBody">
+                                            <tr>
+                                                <td colspan="8" class="text-center text-muted py-3">Memuat data barang...</td>
+                                            </tr>
+                                        </tbody>
+                                    </table>
+                                </div>
+                            </div>
+
+                            <!-- ================= TAB 4: LOG TRANSAKSI & REKAP ================= -->
+                            <div class="tab-pane fade" id="tab-trans" role="tabpanel">
+                                <div class="d-flex justify-content-between align-items-center mb-3">
+                                    <h5 class="font-weight-bold m-0"><i class="fas fa-history me-2"></i>Log Riwayat Transaksi Inventaris</h5>
+                                    <div>
+                                        <button class="btn btn-success me-2" onclick="exportExcel()">
+                                            <i class="fas fa-file-excel me-1"></i>Export Excel (.xlsx)
+                                        </button>
+                                        <button class="btn btn-primary" data-toggle="modal" data-target="#modalTransaction">
+                                            <i class="fas fa-plus-circle me-1"></i>+ Catat Transaksi Manual
+                                        </button>
+                                    </div>
+                                </div>
+
+                                <!-- Filter Form AdminLTE -->
+                                <div class="row mb-3">
+                                    <div class="col-md-3 mb-2">
+                                        <label class="form-label small font-weight-bold">Dari Tanggal:</label>
+                                        <input type="date" id="transStartDate" class="form-control" onchange="loadTransactions()">
+                                    </div>
+                                    <div class="col-md-3 mb-2">
+                                        <label class="form-label small font-weight-bold">Sampai Tanggal:</label>
+                                        <input type="date" id="transEndDate" class="form-control" onchange="loadTransactions()">
+                                    </div>
+                                    <div class="col-md-3 mb-2">
+                                        <label class="form-label small font-weight-bold">Tipe Transaksi:</label>
+                                        <select id="transTypeFilter" class="form-control custom-select" onchange="loadTransactions()">
+                                            <option value="">Semua (IN / OUT)</option>
+                                            <option value="IN">Masuk (IN)</option>
+                                            <option value="OUT">Keluar (OUT)</option>
+                                        </select>
+                                    </div>
+                                    <div class="col-md-3 mb-2">
+                                        <label class="form-label small font-weight-bold">Sumber Input:</label>
+                                        <select id="transSourceFilter" class="form-control custom-select" onchange="loadTransactions()">
+                                            <option value="">Semua (WA & Web)</option>
+                                            <option value="WA_BOT">WhatsApp Bot</option>
+                                            <option value="WEB_DASHBOARD">Web Dashboard</option>
+                                        </select>
+                                    </div>
+                                </div>
+
+                                <!-- Tabel Log Transaksi -->
+                                <div class="table-responsive">
+                                    <table class="table table-bordered table-striped table-hover align-middle">
+                                        <thead class="bg-navy text-white">
+                                            <tr>
+                                                <th>Waktu</th>
+                                                <th>Kode / Nama Barang</th>
+                                                <th>Tipe</th>
+                                                <th>Jumlah</th>
+                                                <th>Stok (Seb ➡️ Ses)</th>
+                                                <th>Sumber Input</th>
+                                                <th>Penginput</th>
+                                                <th>Keterangan</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody id="transTableBody">
+                                            <tr>
+                                                <td colspan="8" class="text-center text-muted py-3">Memuat riwayat transaksi...</td>
+                                            </tr>
+                                        </tbody>
+                                    </table>
+                                </div>
+                            </div>
+
+                            <!-- ================= TAB 5: WHITELIST OPERATOR WA ================= -->
+                            <div class="tab-pane fade" id="tab-whitelist" role="tabpanel">
+                                <div class="d-flex justify-content-between align-items-center mb-3">
+                                    <div>
+                                        <h5 class="font-weight-bold m-0"><i class="fas fa-user-shield me-2"></i>Daftar Whitelist Operator WhatsApp</h5>
+                                        <p class="text-muted small mb-0">Nomor HP yang diizinkan untuk mengeksekusi perintah transaksi pada WhatsApp Bot.</p>
+                                    </div>
+                                    <button class="btn btn-primary" data-toggle="modal" data-target="#modalWhitelist">
+                                        <i class="fas fa-user-plus me-1"></i>+ Tambah Operator
+                                    </button>
+                                </div>
+
+                                <div class="table-responsive">
+                                    <table class="table table-bordered table-striped table-hover align-middle">
+                                        <thead class="bg-navy text-white">
+                                            <tr>
+                                                <th>Nomor WhatsApp / LID</th>
+                                                <th>Nama Pengelola</th>
+                                                <th>Role</th>
+                                                <th>Tgl Didaftarkan</th>
+                                                <th class="text-center">Aksi</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody id="whitelistTableBody">
+                                            <tr>
+                                                <td colspan="5" class="text-center text-muted py-3">Memuat whitelist...</td>
+                                            </tr>
+                                        </tbody>
+                                    </table>
+                                </div>
+                            </div>
+
+                        </div>
+                    </div>
+                </div>
+
+            </div>
+        </div>
+    </div>
+
+    <!-- Main Footer -->
+    <footer class="main-footer text-sm text-center py-3">
+        <strong>Copyright &copy; 2026 <a href="#">PPMB Inventory Management</a>.</strong> All rights reserved.
+    </footer>
+</div>
+
+<!-- ================= MODAL DIALOGS ================= -->
+
+<!-- Modal Tambah/Edit Barang -->
+<div class="modal fade" id="modalItem" tabindex="-1" role="dialog">
+    <div class="modal-dialog" role="document">
+        <div class="modal-content">
+            <div class="modal-header bg-navy text-white">
+                <h5 class="modal-title font-weight-bold" id="modalItemTitle">Tambah Barang Inventaris</h5>
+                <button type="button" class="close text-white" data-dismiss="modal"><span>&times;</span></button>
+            </div>
+            <div class="modal-body">
+                <form id="formItem">
+                    <input type="hidden" id="itemId">
+                    <div class="form-group">
+                        <label class="font-weight-bold">Kode Barang (Unik):</label>
+                        <input type="text" id="itemCode" class="form-control text-uppercase" placeholder="misal: KAOS-MABA-L" required>
+                    </div>
+                    <div class="form-group">
+                        <label class="font-weight-bold">Nama Barang:</label>
+                        <input type="text" id="itemName" class="form-control" placeholder="misal: Kaos Maba Ukuran L" required>
+                    </div>
+                    <div class="form-group">
+                        <label class="font-weight-bold">Kategori:</label>
+                        <select id="itemCategory" class="form-control custom-select" required></select>
+                    </div>
+                    <div class="row">
+                        <div class="col-6">
+                            <div class="form-group">
+                                <label class="font-weight-bold">Satuan Unit:</label>
+                                <input type="text" id="itemUnit" class="form-control" value="pcs" required>
+                            </div>
+                        </div>
+                        <div class="col-6">
+                            <div class="form-group">
+                                <label class="font-weight-bold">Min Stok Alert:</label>
+                                <input type="number" id="itemMinStock" class="form-control" value="5" min="0" required>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label class="font-weight-bold">Stok Awal (Khusus Barang Baru):</label>
+                        <input type="number" id="itemCurrentStock" class="form-control" value="0" min="0">
+                    </div>
+                    <div class="form-group">
+                        <label class="font-weight-bold">Lokasi Simpan Gudang:</label>
+                        <input type="text" id="itemLocation" class="form-control" placeholder="misal: Rak A1 Gudang Utama">
+                    </div>
+                    <button type="submit" class="btn btn-primary btn-block font-weight-bold">Simpan Barang</button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Modal Tambah Kategori -->
+<div class="modal fade" id="modalCategory" tabindex="-1" role="dialog">
+    <div class="modal-dialog" role="document">
+        <div class="modal-content">
+            <div class="modal-header bg-navy text-white">
+                <h5 class="modal-title font-weight-bold">Tambah Kategori Baru</h5>
+                <button type="button" class="close text-white" data-dismiss="modal"><span>&times;</span></button>
+            </div>
+            <div class="modal-body">
+                <form id="formCategory">
+                    <div class="form-group">
+                        <label class="font-weight-bold">Nama Kategori:</label>
+                        <input type="text" id="catName" class="form-control" placeholder="misal: Atribut Expo" required>
+                    </div>
+                    <div class="form-group">
+                        <label class="font-weight-bold">Keterangan:</label>
+                        <textarea id="catDesc" class="form-control" rows="3"></textarea>
+                    </div>
+                    <button type="submit" class="btn btn-primary btn-block font-weight-bold">Simpan Kategori</button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Modal Catat Transaksi Manual -->
+<div class="modal fade" id="modalTransaction" tabindex="-1" role="dialog">
+    <div class="modal-dialog" role="document">
+        <div class="modal-content">
+            <div class="modal-header bg-navy text-white">
+                <h5 class="modal-title font-weight-bold">Catat Transaksi Inventaris</h5>
+                <button type="button" class="close text-white" data-dismiss="modal"><span>&times;</span></button>
+            </div>
+            <div class="modal-body">
+                <form id="formTransaction">
+                    <div class="form-group">
+                        <label class="font-weight-bold">Pilih Barang:</label>
+                        <select id="transItemSelect" class="form-control custom-select" required></select>
+                    </div>
+                    <div class="form-group">
+                        <label class="font-weight-bold">Tipe Transaksi:</label>
+                        <select id="transType" class="form-control custom-select" required>
+                            <option value="IN">MASUK (IN) - Restock / Tambah Stok</option>
+                            <option value="OUT">KELUAR (OUT) - Distribusi / Pengeluaran</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label class="font-weight-bold">Jumlah (Quantity):</label>
+                        <input type="number" id="transQty" class="form-control" min="1" value="1" required>
+                    </div>
+                    <div class="form-group">
+                        <label class="font-weight-bold">Keterangan / Penerima:</label>
+                        <input type="text" id="transNotes" class="form-control" placeholder="misal: Distribusi Panitia Expo">
+                    </div>
+                    <button type="submit" class="btn btn-primary btn-block font-weight-bold">Proses Transaksi</button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Modal Tambah Whitelist WA -->
+<div class="modal fade" id="modalWhitelist" tabindex="-1" role="dialog">
+    <div class="modal-dialog" role="document">
+        <div class="modal-content">
+            <div class="modal-header bg-navy text-white">
+                <h5 class="modal-title font-weight-bold">Tambah Operator WA Whitelist</h5>
+                <button type="button" class="close text-white" data-dismiss="modal"><span>&times;</span></button>
+            </div>
+            <div class="modal-body">
+                <form id="formWhitelist">
+                    <div class="form-group">
+                        <label class="font-weight-bold">Nomor WhatsApp (Format 62...):</label>
+                        <input type="text" id="wlPhone" class="form-control" placeholder="628123456789" required>
+                    </div>
+                    <div class="form-group">
+                        <label class="font-weight-bold">Nama Pengelola / Panitia:</label>
+                        <input type="text" id="wlName" class="form-control" placeholder="misal: Budi (Sie Logistik)" required>
+                    </div>
+                    <div class="form-group">
+                        <label class="font-weight-bold">Role Hak Akses:</label>
+                        <select id="wlRole" class="form-control custom-select">
+                            <option value="operator">Operator Lapangan</option>
+                            <option value="admin">Admin</option>
+                        </select>
+                    </div>
+                    <button type="submit" class="btn btn-primary btn-block font-weight-bold">Daftarkan Nomor WA</button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- jQuery & Bootstrap 4 JS (AdminLTE v3 Native Dependencies) -->
+<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@4.6.2/dist/js/bootstrap.bundle.min.js"></script>
+<!-- AdminLTE App JS -->
+<script src="https://cdn.jsdelivr.net/npm/admin-lte@3.2/dist/js/adminlte.min.js"></script>
+
+<!-- App Frontend Logic -->
+<script>
+    let categoriesData = [];
+    let itemsData = [];
+
+    // ================= VERIFIKASI SESI LOGIN JWT =================
+    const token = localStorage.getItem('token');
+    const userJson = localStorage.getItem('user');
+
+    if (!token || !userJson) {
+        window.location.href = '/login';
+    }
+
+    const currentUser = JSON.parse(userJson || '{}');
+
+    // Helper Autentikasi Fetch Wrapper
+    async function authFetch(url, options = {}) {
+        options.headers = options.headers || {};
+        options.headers['Authorization'] = `Bearer ${token}`;
+
+        const res = await fetch(url, options);
+        if (res.status === 401) {
+            alert('Sesi login telah kadaluarsa. Silakan login kembali.');
+            logout();
+            return null;
+        }
+        return res;
+    }
+
+    function logout() {
+        localStorage.removeItem('token');
+        localStorage.removeItem('user');
+        window.location.href = '/login';
+    }
+
+    // Helper Navigasi Tab dengan Clean URL
+    function switchAdminTab(url, tabLinkId) {
+        if (window.location.pathname !== url) {
+            history.pushState(null, '', url);
+        }
+        $(`#${tabLinkId}`).tab('show');
+    }
+
+    // Inisialisasi Tab Aktif Berdasarkan URL Pathname
+    function syncTabFromPath() {
+        const path = window.location.pathname;
+        const targetTabLink = $(`#adminLteTabs a[data-url="${path}"]`);
+        if (targetTabLink.length) {
+            targetTabLink.tab('show');
+        } else {
+            $('#tab-dashboard-link').tab('show');
+        }
+    }
+
+    $(document).ready(function() {
+        // Load Komponen Navbar Terpisah via jQuery Load
+        $('#navbar-placeholder').load('/components/navbar.html', function() {
+            // Set User Info setelah navbar ter-render
+            $('#navUserFullName').text(currentUser.full_name || currentUser.username || 'Admin');
+            $('#navUserRole').text('ROLE: ' + (currentUser.role || 'ADMIN').toUpperCase());
+            
+            // Muat status WA Bot
+            loadWaBotStatus();
+        });
+
+        // Sinkronisasi Tab saat halaman pertama dipanggil
+        syncTabFromPath();
+
+        // Event listener saat Tab diklik oleh user
+        $('#adminLteTabs a[data-toggle="pill"]').on('shown.bs.tab', function(e) {
+            const url = $(e.target).attr('data-url');
+            if (url && window.location.pathname !== url) {
+                history.pushState(null, '', url);
+            }
+        });
+
+        // Event listener saat tombol Back/Forward browser ditekan
+        window.addEventListener('popstate', function() {
+            syncTabFromPath();
+        });
+
+        loadDashboard();
+        loadCategories();
+        loadItems();
+        loadTransactions();
+        loadWhitelist();
+
+        // Interval pengecekan status Bot WA setiap 5 detik
+        setInterval(loadWaBotStatus, 5000);
+    });
+
+    // ================= DASHBOARD & WA STATUS =================
+    async function loadDashboard() {
+        try {
+            const res = await authFetch('/api/summary');
+            if (!res) return;
+            const data = await res.json();
+            if (data.success) {
+                const summary = data.data;
+                $('#statTotalUnitStock').text(Number(summary.total_unit_stock || 0).toLocaleString('id-ID'));
+                $('#statTotalItems').text(Number(summary.total_items || 0).toLocaleString('id-ID'));
+                $('#statLowStock').text(Number(summary.low_stock_items || 0).toLocaleString('id-ID'));
+                $('#statTodayTrans').text(Number(summary.today_transactions || 0).toLocaleString('id-ID'));
+                $('#statTotalCategories').text(Number(summary.total_categories || 0).toLocaleString('id-ID'));
+            }
+        } catch (err) {
+            console.error('Error loadDashboard:', err);
+        }
+    }
+
+    async function loadWaBotStatus() {
+        try {
+            const res = await fetch('/api/wa/status');
+            const result = await res.json();
+            if (!result.success) return;
+
+            const { status, bot_number, qr_code } = result.data;
+
+            const navBadge = $('#navWaStatus');
+            const waBadge = $('#waStatusBadge');
+            const qrSection = $('#waQrSection');
+            const connectedSection = $('#waConnectedSection');
+
+            if (!navBadge.length) return;
+
+            if (status === 'CONNECTED') {
+                navBadge.attr('class', 'badge badge-success px-3 py-2 font-weight-bold me-3');
+                navBadge.html('<i class="fas fa-check-circle me-1"></i> WA Bot Active');
+
+                waBadge.attr('class', 'badge badge-success fs-6 px-4 py-2');
+                waBadge.text('TERHUBUNG');
+
+                qrSection.hide();
+                connectedSection.show();
+                $('#waBotNumberText').text('+' + bot_number);
+            } else if (status === 'CONNECTING' && qr_code) {
+                navBadge.attr('class', 'badge badge-warning text-dark px-3 py-2 font-weight-bold me-3');
+                navBadge.html('<i class="fas fa-qrcode me-1"></i> Scan QR Code');
+
+                waBadge.attr('class', 'badge badge-warning text-dark fs-6 px-4 py-2');
+                waBadge.text('MEMBUTUHKAN SCAN QR CODE');
+
+                connectedSection.hide();
+                qrSection.show();
+                $('#waQrImage').attr('src', qr_code);
+            } else {
+                navBadge.attr('class', 'badge badge-danger px-3 py-2 font-weight-bold me-3');
+                navBadge.html('<i class="fas fa-times-circle me-1"></i> WA Disconnected');
+
+                waBadge.attr('class', 'badge badge-danger fs-6 px-4 py-2');
+                waBadge.text('TERPUTUS / CONNECTING...');
+
+                qrSection.hide();
+                connectedSection.hide();
+            }
+        } catch (err) {
+            console.error(err);
+        }
+    }
+
+    // ================= KATEGORI & MASTER BARANG =================
+    async function loadCategories() {
+        try {
+            const res = await authFetch('/api/categories');
+            if (!res) return;
+            const result = await res.json();
+            if (result.success) {
+                categoriesData = result.data;
+                const catSelect = $('#filterCategorySelect');
+                const itemCatSelect = $('#itemCategory');
+                const dashCatRow = $('#dashCategoriesRow');
+                
+                catSelect.html('<option value="">Semua Kategori</option>');
+                itemCatSelect.html('<option value="">-- Pilih Kategori --</option>');
+                dashCatRow.empty();
+
+                result.data.forEach(c => {
+                    catSelect.append(`<option value="${c.id}">${c.name}</option>`);
+                    itemCatSelect.append(`<option value="${c.id}">${c.name}</option>`);
+
+                    dashCatRow.append(`
+                        <div class="col-md-4 mb-3">
+                            <div class="info-box bg-light border">
+                                <span class="info-box-icon bg-navy"><i class="fas fa-folder-open"></i></span>
+                                <div class="info-box-content">
+                                    <span class="info-box-text font-weight-bold">${c.name}</span>
+                                    <span class="info-box-number text-muted small">${c.description || 'Kategori Inventaris PPMB'}</span>
+                                </div>
+                            </div>
+                        </div>
+                    `);
+                });
+            }
+        } catch (err) {
+            console.error(err);
+        }
+    }
+
+    async function loadItems() {
+        try {
+            const search = $('#searchItemInput').val();
+            const catId = $('#filterCategorySelect').val();
+
+            let url = `/api/items?search=${encodeURIComponent(search)}&category_id=${catId}`;
+            const res = await authFetch(url);
+            if (!res) return;
+            const result = await res.json();
+
+            const tbody = $('#itemsTableBody');
+            const dashLowCallout = $('#lowStockCallout');
+            const dashLowTbody = $('#dashLowStockBody');
+            const dashAllItemsBody = $('#dashAllItemsBody');
+            const transItemSelect = $('#transItemSelect');
+
+            if (result.success) {
+                itemsData = result.data;
+                tbody.empty();
+                dashLowTbody.empty();
+                dashAllItemsBody.empty();
+                transItemSelect.html('<option value="">-- Pilih Barang --</option>');
+
+                if (result.data.length === 0) {
+                    tbody.html('<tr><td colspan="8" class="text-center text-muted">Tidak ada data barang.</td></tr>');
+                    dashAllItemsBody.html('<tr><td colspan="4" class="text-center text-muted">Belum ada barang inventaris.</td></tr>');
+                }
+
+                let lowCount = 0;
+                result.data.forEach(item => {
+                    const isLow = item.current_stock <= item.min_stock;
+                    const stockBadge = isLow 
+                        ? `<span class="badge badge-danger px-2 py-1 fs-6">${item.current_stock} ${item.unit} (MIN!)</span>` 
+                        : `<span class="badge badge-success px-2 py-1 fs-6">${item.current_stock} ${item.unit}</span>`;
+
+                    // Populate Master Items Table
+                    tbody.append(`
+                        <tr>
+                            <td><span class="badge badge-secondary">${item.code}</span></td>
+                            <td class="font-weight-bold">${item.name}</td>
+                            <td>${item.category_name || '-'}</td>
+                            <td>${stockBadge}</td>
+                            <td>${item.min_stock} ${item.unit}</td>
+                            <td>${item.unit}</td>
+                            <td>${item.location || '-'}</td>
+                            <td class="text-center">
+                                <button class="btn btn-xs btn-primary me-1" onclick="editItem(${item.id})">
+                                    <i class="fas fa-edit"></i> Edit
+                                </button>
+                                <button class="btn btn-xs btn-danger" onclick="deleteItem(${item.id})">
+                                    <i class="fas fa-trash"></i> Hapus
+                                </button>
+                            </td>
+                        </tr>
+                    `);
+
+                    // Populate Select in Transaction Form
+                    transItemSelect.append(`<option value="${item.code}">[${item.code}] ${item.name} (Stok: ${item.current_stock} ${item.unit})</option>`);
+
+                    // Populate Dashboard All Items Table
+                    const isAmanBadge = isLow 
+                        ? '<span class="badge badge-danger"><i class="fas fa-exclamation-circle me-1"></i>Stok Menipis</span>' 
+                        : '<span class="badge badge-success"><i class="fas fa-check-circle me-1"></i>Aman</span>';
+
+                    dashAllItemsBody.append(`
+                        <tr>
+                            <td>
+                                <b>[${item.code}]</b> ${item.name}
+                                <div class="text-muted small">Lokasi: ${item.location || '-'}</div>
+                            </td>
+                            <td><span class="badge badge-light border">${item.category_name || '-'}</span></td>
+                            <td><b>${item.current_stock}</b> ${item.unit} <span class="text-muted small">(Min: ${item.min_stock})</span></td>
+                            <td>${isAmanBadge}</td>
+                        </tr>
+                    `);
+
+                    // Populate Low Stock Callout Table
+                    if (isLow) {
+                        lowCount++;
+                        dashLowTbody.append(`
+                            <tr>
+                                <td><span class="badge badge-danger">${item.code}</span></td>
+                                <td class="font-weight-bold">${item.name}</td>
+                                <td>${item.category_name || '-'}</td>
+                                <td class="text-danger font-weight-bold">${item.current_stock} ${item.unit}</td>
+                                <td>${item.min_stock} ${item.unit}</td>
+                                <td>${item.location || '-'}</td>
+                            </tr>
+                        `);
+                    }
+                });
+
+                if (lowCount > 0) {
+                    dashLowCallout.show();
+                } else {
+                    dashLowCallout.hide();
+                }
+            }
+        } catch (err) {
+            console.error(err);
+        }
+    }
+
+    $('#formCategory').on('submit', async function(e) {
+        e.preventDefault();
+        const name = $('#catName').val();
+        const description = $('#catDesc').val();
+
+        const res = await authFetch('/api/categories', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ name, description })
+        });
+        if (!res) return;
+        const data = await res.json();
+        alert(data.message);
+        if (data.success) {
+            $('#modalCategory').modal('hide');
+            $('#formCategory')[0].reset();
+            loadCategories();
+        }
+    });
+
+    $('#formItem').on('submit', async function(e) {
+        e.preventDefault();
+        const id = $('#itemId').val();
+        const payload = {
+            code: $('#itemCode').val(),
+            name: $('#itemName').val(),
+            category_id: $('#itemCategory').val(),
+            unit: $('#itemUnit').val(),
+            min_stock: $('#itemMinStock').val(),
+            current_stock: $('#itemCurrentStock').val(),
+            location: $('#itemLocation').val()
+        };
+
+        const url = id ? `/api/items/${id}` : '/api/items';
+        const method = id ? 'PUT' : 'POST';
+
+        const res = await authFetch(url, {
+            method,
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(payload)
+        });
+        if (!res) return;
+        const data = await res.json();
+        alert(data.message);
+        if (data.success) {
+            $('#modalItem').modal('hide');
+            loadItems();
+            loadDashboard();
+        }
+    });
+
+    function resetItemForm() {
+        $('#itemId').val('');
+        $('#modalItemTitle').text('Tambah Barang Inventaris');
+        $('#formItem')[0].reset();
+        $('#itemCurrentStock').prop('disabled', false);
+    }
+
+    function editItem(id) {
+        const item = itemsData.find(i => i.id === id);
+        if (!item) return;
+
+        $('#itemId').val(item.id);
+        $('#modalItemTitle').text('Edit Barang Inventaris');
+        $('#itemCode').val(item.code);
+        $('#itemName').val(item.name);
+        $('#itemCategory').val(item.category_id);
+        $('#itemUnit').val(item.unit);
+        $('#itemMinStock').val(item.min_stock);
+        $('#itemCurrentStock').val(item.current_stock);
+        $('#itemCurrentStock').prop('disabled', true);
+        $('#itemLocation').val(item.location || '');
+
+        $('#modalItem').modal('show');
+    }
+
+    async function deleteItem(id) {
+        if (!confirm('Apakah Anda yakin ingin menghapus barang ini?')) return;
+        const res = await authFetch(`/api/items/${id}`, { method: 'DELETE' });
+        if (!res) return;
+        const data = await res.json();
+        alert(data.message);
+        if (data.success) {
+            loadItems();
+            loadDashboard();
+        }
+    }
+
+    // ================= TRANSAKSI & LOG =================
+    async function loadTransactions() {
+        try {
+            const startDate = $('#transStartDate').val();
+            const endDate = $('#transEndDate').val();
+            const type = $('#transTypeFilter').val();
+            const source = $('#transSourceFilter').val();
+
+            let url = `/api/transactions?start_date=${startDate}&end_date=${endDate}&type=${type}&source=${source}`;
+            const res = await authFetch(url);
+            if (!res) return;
+            const result = await res.json();
+
+            const tbody = $('#transTableBody');
+            const dashRecentList = $('#dashRecentTransList');
+
+            if (result.success) {
+                tbody.empty();
+                dashRecentList.empty();
+
+                if (result.data.length === 0) {
+                    tbody.html('<tr><td colspan="8" class="text-center text-muted">Belum ada riwayat transaksi.</td></tr>');
+                    dashRecentList.html('<li class="item text-center text-muted py-3">Belum ada transaksi terbaru.</li>');
+                    return;
+                }
+
+                // Render Full Log Transaksi Table
+                result.data.forEach(t => {
+                    const typeBadge = t.type === 'IN' 
+                        ? '<span class="badge badge-success px-2 py-1"><i class="fas fa-arrow-down me-1"></i>MASUK</span>' 
+                        : '<span class="badge badge-danger px-2 py-1"><i class="fas fa-arrow-up me-1"></i>KELUAR</span>';
+                    
+                    const sourceBadge = t.source === 'WA_BOT'
+                        ? '<span class="badge badge-info px-2 py-1"><i class="fab fa-whatsapp me-1"></i>WA Bot</span>'
+                        : '<span class="badge badge-secondary px-2 py-1"><i class="fas fa-desktop me-1"></i>Web</span>';
+
+                    const operatorText = t.source === 'WA_BOT' ? `WA: +${t.created_by_wa}` : 'Web Admin';
+                    const timeFormatted = new Date(t.created_at).toLocaleString('id-ID');
+
+                    tbody.append(`
+                        <tr>
+                            <td class="small">${timeFormatted}</td>
+                            <td><b>[${t.item_code}]</b> ${t.item_name}</td>
+                            <td>${typeBadge}</td>
+                            <td class="font-weight-bold">${t.quantity} ${t.unit}</td>
+                            <td class="small">${t.stock_before} ➡️ <b>${t.stock_after}</b></td>
+                            <td>${sourceBadge}</td>
+                            <td>${operatorText}</td>
+                            <td>${t.notes || '-'}</td>
+                        </tr>
+                    `);
+                });
+
+                // Render 5 Transaksi Terbaru di Dashboard Overview
+                const recent5 = result.data.slice(0, 5);
+                recent5.forEach(t => {
+                    const typeIcon = t.type === 'IN' 
+                        ? '<span class="badge badge-success"><i class="fas fa-arrow-down"></i> IN</span>' 
+                        : '<span class="badge badge-danger"><i class="fas fa-arrow-up"></i> OUT</span>';
+
+                    const timeFormatted = new Date(t.created_at).toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' });
+                    const operatorText = t.source === 'WA_BOT' ? `WA (+${t.created_by_wa})` : 'Web Admin';
+
+                    dashRecentList.append(`
+                        <li class="item p-2 border-bottom">
+                            <div class="d-flex justify-content-between align-items-center">
+                                <div>
+                                    <span class="product-title font-weight-bold">[${t.item_code}] ${t.item_name}</span>
+                                    <span class="ml-2">${typeIcon}</span>
+                                    <div class="product-description text-muted small">
+                                        Jumlah: <b>${t.quantity} ${t.unit}</b> (${t.stock_before} ➡️ ${t.stock_after}) | oleh ${operatorText}
+                                    </div>
+                                </div>
+                                <span class="badge badge-light border text-muted small">${timeFormatted}</span>
+                            </div>
+                        </li>
+                    `);
+                });
+            }
+        } catch (err) {
+            console.error(err);
+        }
+    }
+
+    $('#formTransaction').on('submit', async function(e) {
+        e.preventDefault();
+        const payload = {
+            item_code: $('#transItemSelect').val(),
+            type: $('#transType').val(),
+            quantity: $('#transQty').val(),
+            notes: $('#transNotes').val()
+        };
+
+        const res = await authFetch('/api/transactions', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(payload)
+        });
+        if (!res) return;
+        const data = await res.json();
+        alert(data.message);
+        if (data.success) {
+            $('#modalTransaction').modal('hide');
+            $('#formTransaction')[0].reset();
+            loadTransactions();
+            loadItems();
+            loadDashboard();
+        }
+    });
+
+    function exportExcel() {
+        const startDate = $('#transStartDate').val();
+        const endDate = $('#transEndDate').val();
+        const type = $('#transTypeFilter').val();
+
+        window.location.href = `/api/export/transactions?token=${token}&start_date=${startDate}&end_date=${endDate}&type=${type}`;
+    }
+
+    // ================= WHITELIST OPERATOR WA =================
+    async function loadWhitelist() {
+        try {
+            const res = await authFetch('/api/whitelist');
+            if (!res) return;
+            const result = await res.json();
+
+            const tbody = $('#whitelistTableBody');
+            if (result.success) {
+                tbody.empty();
+                if (result.data.length === 0) {
+                    tbody.html('<tr><td colspan="5" class="text-center text-muted">Belum ada nomor whitelist.</td></tr>');
+                    return;
+                }
+
+                result.data.forEach(wl => {
+                    tbody.append(`
+                        <tr>
+                            <td><span class="badge badge-dark fs-6">+${wl.phone_number}</span></td>
+                            <td class="font-weight-bold">${wl.name}</td>
+                            <td><span class="badge badge-primary text-uppercase">${wl.role}</span></td>
+                            <td class="small">${new Date(wl.created_at).toLocaleDateString('id-ID')}</td>
+                            <td class="text-center">
+                                <button class="btn btn-xs btn-danger" onclick="deleteWhitelist(${wl.id})">
+                                    <i class="fas fa-trash me-1"></i>Hapus
+                                </button>
+                            </td>
+                        </tr>
+                    `);
+                });
+            }
+        } catch (err) {
+            console.error(err);
+        }
+    }
+
+    $('#formWhitelist').on('submit', async function(e) {
+        e.preventDefault();
+        const payload = {
+            phone_number: $('#wlPhone').val(),
+            name: $('#wlName').val(),
+            role: $('#wlRole').val()
+        };
+
+        const res = await authFetch('/api/whitelist', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(payload)
+        });
+        if (!res) return;
+        const data = await res.json();
+        alert(data.message);
+        if (data.success) {
+            $('#modalWhitelist').modal('hide');
+            $('#formWhitelist')[0].reset();
+            loadWhitelist();
+        }
+    });
+
+    async function deleteWhitelist(id) {
+        if (!confirm('Apakah Anda yakin ingin menghapus nomor ini dari Whitelist?')) return;
+        const res = await authFetch(`/api/whitelist/${id}`, { method: 'DELETE' });
+        if (!res) return;
+        const data = await res.json();
+        alert(data.message);
+        if (data.success) {
+            loadWhitelist();
+        }
+    }
+</script>
+</body>
+</html>
