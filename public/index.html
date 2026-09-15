@@ -150,6 +150,11 @@
                                 </a>
                             </li>
                             <li class="nav-item">
+                                <a class="nav-link" id="tab-cards-link" data-url="/administrator/stock-cards" data-toggle="pill" href="#tab-cards" role="tab">
+                                    <i class="fas fa-grip me-1 text-info"></i> Ketersediaan Stok (Cards)
+                                </a>
+                            </li>
+                            <li class="nav-item">
                                 <a class="nav-link" id="tab-wa-link" data-url="/administrator/wa-bot" data-toggle="pill" href="#tab-wa" role="tab">
                                     <i class="fab fa-whatsapp me-1 text-success"></i> Status Bot WA & QR
                                 </a>
@@ -274,6 +279,39 @@
                                     </div>
                                 </div>
 
+                            </div>
+
+                            <!-- ================= TAB KETERSEDIAAN STOK (CARDS VIEW) ================= -->
+                            <div class="tab-pane fade" id="tab-cards" role="tabpanel">
+                                <!-- Search & Category Filter Bar -->
+                                <div class="row mb-4 align-items-center">
+                                    <div class="col-md-6 mb-2">
+                                        <div class="input-group">
+                                            <div class="input-group-prepend">
+                                                <span class="input-group-text bg-white border-right-0"><i class="fas fa-search text-muted"></i></span>
+                                            </div>
+                                            <input type="text" id="cardsSearchInput" class="form-control border-left-0" placeholder="Cari nama barang, kode, atau lokasi gudang..." onkeyup="renderStockCards()">
+                                        </div>
+                                    </div>
+                                    <div class="col-md-4 mb-2">
+                                        <select id="cardsCategoryFilter" class="form-control custom-select" onchange="renderStockCards()">
+                                            <option value="">Semua Kategori</option>
+                                        </select>
+                                    </div>
+                                    <div class="col-md-2 mb-2 text-md-right">
+                                        <button class="btn btn-outline-secondary w-100 font-weight-bold" onclick="loadItems(); loadCategories();">
+                                            <i class="fas fa-sync-alt me-1"></i> Refresh
+                                        </button>
+                                    </div>
+                                </div>
+
+                                <!-- Cards Container Grid -->
+                                <div class="row" id="stockCardsContainer">
+                                    <div class="col-12 text-center text-muted py-5">
+                                        <i class="fas fa-spinner fa-spin fa-2x mb-2"></i>
+                                        <p>Memuat ketersediaan stok barang...</p>
+                                    </div>
+                                </div>
                             </div>
 
                             <!-- ================= TAB 2: WA BOT STATUS & QR ================= -->
@@ -872,15 +910,18 @@
             if (result.success) {
                 categoriesData = result.data;
                 const catSelect = $('#filterCategorySelect');
+                const cardsCatSelect = $('#cardsCategoryFilter');
                 const itemCatSelect = $('#itemCategory');
                 const dashCatRow = $('#dashCategoriesRow');
                 
                 catSelect.html('<option value="">Semua Kategori</option>');
+                cardsCatSelect.html('<option value="">Semua Kategori</option>');
                 itemCatSelect.html('<option value="">-- Pilih Kategori --</option>');
                 dashCatRow.empty();
 
                 result.data.forEach(c => {
                     catSelect.append(`<option value="${c.id}">${c.name}</option>`);
+                    cardsCatSelect.append(`<option value="${c.id}">${c.name}</option>`);
                     itemCatSelect.append(`<option value="${c.id}">${c.name}</option>`);
 
                     dashCatRow.append(`
@@ -899,6 +940,106 @@
         } catch (err) {
             console.error(err);
         }
+    }
+
+    // Fungsi Render Tampilan Cards Ketersediaan Stok Barang
+    function renderStockCards() {
+        const container = $('#stockCardsContainer');
+        if (!container.length) return;
+
+        const search = ($('#cardsSearchInput').val() || '').toLowerCase();
+        const catId = $('#cardsCategoryFilter').val();
+
+        const filtered = itemsData.filter(item => {
+            const matchSearch = item.name.toLowerCase().includes(search) || 
+                                item.code.toLowerCase().includes(search) || 
+                                (item.location && item.location.toLowerCase().includes(search));
+            const matchCat = catId ? String(item.category_id) === String(catId) : true;
+            return matchSearch && matchCat;
+        });
+
+        container.empty();
+
+        if (filtered.length === 0) {
+            container.html(`
+                <div class="col-12 text-center text-muted py-5">
+                    <i class="fas fa-box-open fa-3x mb-3 text-secondary"></i>
+                    <h5>Tidak ada barang inventaris yang cocok.</h5>
+                    <p class="small">Coba ubah kata kunci pencarian atau filter kategori Anda.</p>
+                </div>
+            `);
+            return;
+        }
+
+        filtered.forEach(item => {
+            const isLow = item.current_stock <= item.min_stock;
+            const isOutOfStock = item.current_stock === 0;
+
+            let cardHeaderBg = 'card-success';
+            let statusBadge = '<span class="badge badge-success px-2 py-1"><i class="fas fa-check-circle me-1"></i>Stok Melimpah</span>';
+            let progressBg = 'bg-success';
+
+            if (isOutOfStock) {
+                cardHeaderBg = 'card-danger';
+                statusBadge = '<span class="badge badge-danger px-2 py-1"><i class="fas fa-times-circle me-1"></i>Stok Habis!</span>';
+                progressBg = 'bg-danger';
+            } else if (isLow) {
+                cardHeaderBg = 'card-warning';
+                statusBadge = '<span class="badge badge-warning text-dark px-2 py-1"><i class="fas fa-exclamation-triangle me-1"></i>Stok Menipis</span>';
+                progressBg = 'bg-warning';
+            }
+
+            // Hitung estimasi persentase kapasitas stok relatif terhadap min_stock * 3
+            const targetStockCap = Math.max(item.min_stock * 3, item.current_stock, 1);
+            const stockPercent = Math.min(Math.round((item.current_stock / targetStockCap) * 100), 100);
+
+            container.append(`
+                <div class="col-12 col-sm-6 col-md-4 col-lg-3 mb-4">
+                    <div class="card card-outline ${cardHeaderBg} shadow-sm h-100 position-relative">
+                        <div class="card-header border-0 pb-1">
+                            <div class="d-flex justify-content-between align-items-start">
+                                <span class="badge badge-dark font-weight-bold">${item.code}</span>
+                                ${statusBadge}
+                            </div>
+                            <h5 class="card-title font-weight-bold text-dark mt-2 mb-0" style="font-size: 1.1rem; line-height: 1.3;">
+                                ${item.name}
+                            </h5>
+                            <span class="text-muted small d-block mt-1">
+                                <i class="fas fa-folder me-1 text-primary"></i>${item.category_name || 'Tanpa Kategori'}
+                            </span>
+                        </div>
+                        <div class="card-body pt-2 pb-3">
+                            <div class="text-center my-2 p-2 rounded" style="background-color: #f8f9fa; border: 1px solid #e9ecef;">
+                                <span class="text-muted small d-block font-weight-bold text-uppercase" style="letter-spacing: 0.5px;">Ketersediaan Stok</span>
+                                <span class="display-4 font-weight-bold ${isOutOfStock ? 'text-danger' : (isLow ? 'text-warning' : 'text-navy')}">
+                                    ${item.current_stock}
+                                </span>
+                                <span class="h6 text-muted font-weight-bold ms-1">${item.unit}</span>
+                            </div>
+
+                            <div class="mb-3">
+                                <div class="d-flex justify-content-between text-muted small mb-1">
+                                    <span>Batas Minimum: <b>${item.min_stock} ${item.unit}</b></span>
+                                    <span><b>${stockPercent}%</b></span>
+                                </div>
+                                <div class="progress progress-xs rounded-pill" style="height: 6px;">
+                                    <div class="progress-bar ${progressBg} rounded-pill" style="width: ${stockPercent}%"></div>
+                                </div>
+                            </div>
+
+                            <div class="text-muted small">
+                                <div class="mb-1"><i class="fas fa-map-marker-alt text-danger me-2" style="width: 16px;"></i><b>Lokasi:</b> ${item.location || '-'}</div>
+                            </div>
+                        </div>
+                        <div class="card-footer bg-white border-top-0 pt-0 pb-3">
+                            <button class="btn btn-outline-primary btn-sm btn-block font-weight-bold" onclick="switchAdminTab('/administrator/transactions', 'tab-trans-link'); $('#transItemSelect').val('${item.code}'); $('#modalTransaction').modal('show');">
+                                <i class="fas fa-right-left me-1"></i> Catat Transaksi
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            `);
+        });
     }
 
     async function loadItems() {
@@ -923,6 +1064,9 @@
                 dashLowTbody.empty();
                 dashAllItemsBody.empty();
                 transItemSelect.html('<option value="">-- Pilih Barang --</option>');
+
+                // Render tampilan Stock Cards
+                renderStockCards();
 
                 if (result.data.length === 0) {
                     tbody.html('<tr><td colspan="8" class="text-center text-muted">Tidak ada data barang.</td></tr>');

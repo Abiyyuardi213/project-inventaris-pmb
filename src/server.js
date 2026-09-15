@@ -28,6 +28,7 @@ app.get('/login', (req, res) => {
 // Routes Menu Administrator (Semua mengarah ke index.html dengan URL Rapi)
 const adminRoutes = [
     '/administrator/dashboard',
+    '/administrator/stock-cards',
     '/administrator/wa-bot',
     '/administrator/items',
     '/administrator/transactions',
