@@ -41,6 +41,8 @@ router.post('/categories', categoryController.createCategory);
 // Transactions Routes
 router.get('/transactions', transactionController.getTransactions);
 router.post('/transactions', transactionController.createTransaction);
+router.put('/transactions/:id', transactionController.updateTransaction);
+router.delete('/transactions/:id', transactionController.deleteTransaction);
 
 // Whitelist WA Numbers Routes
 router.get('/whitelist', whitelistController.getWhitelistedNumbers);

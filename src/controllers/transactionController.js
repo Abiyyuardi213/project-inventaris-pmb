@@ -222,9 +222,181 @@ async function getDashboardSummary(req, res) {
     }
 }
 
+/**
+ * Membatalkan (Delete / Cancel) Transaksi dan Mengembalikan Stok Barang (Atomic)
+ */
+async function deleteTransaction(req, res) {
+    const { id } = req.params;
+    const connection = await pool.getConnection();
+
+    try {
+        await connection.beginTransaction();
+
+        // 1. Ambil transaksi & lock FOR UPDATE
+        const [transRows] = await connection.query(
+            'SELECT * FROM inventory_transactions WHERE id = ? FOR UPDATE',
+            [id]
+        );
+
+        if (transRows.length === 0) {
+            await connection.rollback();
+            return res.status(404).json({ success: false, message: 'Transaksi tidak ditemukan.' });
+        }
+
+        const transaction = transRows[0];
+
+        // 2. Ambil barang terkait & lock FOR UPDATE
+        const [items] = await connection.query(
+            'SELECT * FROM items WHERE id = ? FOR UPDATE',
+            [transaction.item_id]
+        );
+
+        if (items.length === 0) {
+            await connection.rollback();
+            return res.status(404).json({ success: false, message: 'Barang terkait transaksi ini tidak ditemukan.' });
+        }
+
+        const item = items[0];
+        let newStock = item.current_stock;
+
+        // Jika transaksi sebelumnya IN, pembatalan artinya mengurangi stok (stok -= quantity)
+        // Jika transaksi sebelumnya OUT, pembatalan artinya mengembalikan stok (stok += quantity)
+        if (transaction.type === 'IN') {
+            if (item.current_stock < transaction.quantity) {
+                await connection.rollback();
+                return res.status(400).json({
+                    success: false,
+                    message: `Gagal membatalkan transaksi MASUK! Stok saat ini (${item.current_stock} ${item.unit}) kurang dari jumlah transaksi yang akan dibatalkan (${transaction.quantity} ${item.unit}).`
+                });
+            }
+            newStock = item.current_stock - transaction.quantity;
+        } else if (transaction.type === 'OUT') {
+            newStock = item.current_stock + transaction.quantity;
+        }
+
+        // 3. Update stok barang
+        await connection.query('UPDATE items SET current_stock = ? WHERE id = ?', [newStock, item.id]);
+
+        // 4. Hapus log transaksi
+        await connection.query('DELETE FROM inventory_transactions WHERE id = ?', [id]);
+
+        await connection.commit();
+
+        res.json({
+            success: true,
+            message: `Transaksi berhasil dibatalkan/dihapus! Stok '${item.name}' telah disesuaikan kembali menjadi ${newStock} ${item.unit}.`
+        });
+    } catch (error) {
+        await connection.rollback();
+        console.error('Error deleteTransaction:', error);
+        res.status(500).json({ success: false, message: 'Terjadi kesalahan server saat membatalkan transaksi.' });
+    } finally {
+        connection.release();
+    }
+}
+
+/**
+ * Mengedit Transaksi (Jumlah, Tipe, Catatan) dengan Penyesuaian Stok Otomatis (Atomic)
+ */
+async function updateTransaction(req, res) {
+    const { id } = req.params;
+    const { type, quantity, notes } = req.body;
+
+    const connection = await pool.getConnection();
+
+    try {
+        await connection.beginTransaction();
+
+        // 1. Ambil transaksi lama & lock FOR UPDATE
+        const [transRows] = await connection.query(
+            'SELECT * FROM inventory_transactions WHERE id = ? FOR UPDATE',
+            [id]
+        );
+
+        if (transRows.length === 0) {
+            await connection.rollback();
+            return res.status(404).json({ success: false, message: 'Transaksi tidak ditemukan.' });
+        }
+
+        const oldTrans = transRows[0];
+        const newQty = parseInt(quantity, 10);
+
+        if (isNaN(newQty) || newQty <= 0) {
+            await connection.rollback();
+            return res.status(400).json({ success: false, message: 'Jumlah transaksi harus berupa angka positif.' });
+        }
+
+        const newType = (type || oldTrans.type).toUpperCase();
+        if (newType !== 'IN' && newType !== 'OUT') {
+            await connection.rollback();
+            return res.status(400).json({ success: false, message: "Tipe transaksi harus 'IN' atau 'OUT'." });
+        }
+
+        // 2. Ambil data barang & lock FOR UPDATE
+        const [items] = await connection.query(
+            'SELECT * FROM items WHERE id = ? FOR UPDATE',
+            [oldTrans.item_id]
+        );
+
+        if (items.length === 0) {
+            await connection.rollback();
+            return res.status(404).json({ success: false, message: 'Barang terkait transaksi tidak ditemukan.' });
+        }
+
+        const item = items[0];
+
+        // 3. Revert efek transaksi lama pada stok barang
+        let tempStock = item.current_stock;
+        if (oldTrans.type === 'IN') {
+            tempStock -= oldTrans.quantity;
+        } else if (oldTrans.type === 'OUT') {
+            tempStock += oldTrans.quantity;
+        }
+
+        // 4. Terapkan efek transaksi baru pada stok barang
+        let finalStock = tempStock;
+        if (newType === 'IN') {
+            finalStock = tempStock + newQty;
+        } else if (newType === 'OUT') {
+            if (tempStock < newQty) {
+                await connection.rollback();
+                return res.status(400).json({
+                    success: false,
+                    message: `Stok tidak mencukupi untuk perubahan transaksi! Stok dasar: ${tempStock} ${item.unit}, diminta OUT: ${newQty} ${item.unit}.`
+                });
+            }
+            finalStock = tempStock - newQty;
+        }
+
+        // 5. Update stok barang & data log transaksi
+        await connection.query('UPDATE items SET current_stock = ? WHERE id = ?', [finalStock, item.id]);
+        await connection.query(
+            `UPDATE inventory_transactions 
+             SET type = ?, quantity = ?, stock_before = ?, stock_after = ?, notes = ? 
+             WHERE id = ?`,
+            [newType, newQty, tempStock, finalStock, notes || null, id]
+        );
+
+        await connection.commit();
+
+        res.json({
+            success: true,
+            message: `Berhasil memperbarui transaksi! Stok '${item.name}' kini ${finalStock} ${item.unit}.`
+        });
+    } catch (error) {
+        await connection.rollback();
+        console.error('Error updateTransaction:', error);
+        res.status(500).json({ success: false, message: 'Terjadi kesalahan server saat memperbarui transaksi.' });
+    } finally {
+        connection.release();
+    }
+}
+
 module.exports = {
     processTransaction,
     createTransaction,
     getTransactions,
+    deleteTransaction,
+    updateTransaction,
     getDashboardSummary
 };
